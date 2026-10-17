@@ -1,10 +1,12 @@
-"""Search Service coordinating Inverted Index, Boolean, TF-IDF, and BM25 Rankers.
+"""Search Service coordinating Inverted Index, Boolean, TF-IDF, BM25, and Language Model Rankers.
 
 Adheres strictly to ScholarPulse SRS v1.0 and AGENTS.md:
 - Transparent Python-native Information Retrieval algorithms
 - BM25 as the default ranker
 - TF-IDF with Vector Space Model cosine similarity
 - Full Boolean Retrieval with Shunting-Yard parser
+- Query-Likelihood Language Model with Dirichlet smoothing
+- Passage retrieval with sentence-level snippet extraction and highlighting
 - Metadata filtering (publication year range, category)
 - Document ranking with explainable term breakdown
 - Artifact serialization to and from JSON
@@ -19,6 +21,8 @@ from backend.app.retrieval.inverted_index import InvertedIndex
 from backend.app.retrieval.boolean import BooleanRetrievalEngine
 from backend.app.retrieval.tfidf import TFIDFRetrievalEngine, ScoredDocument
 from backend.app.retrieval.bm25 import BM25RetrievalEngine
+from backend.app.retrieval.language_model import LanguageModelRetrievalEngine
+from backend.app.retrieval.passage_retrieval import PassageRetrievalEngine
 
 
 @dataclass
@@ -30,6 +34,8 @@ class SearchResult:
     method: str
     term_scores: Dict[str, float] = field(default_factory=dict)
     metadata: Dict[str, Any] = field(default_factory=dict)
+    snippet: Optional[str] = None
+    highlighted_snippet: Optional[str] = None
 
 
 @dataclass
@@ -44,14 +50,18 @@ class SearchResponse:
 
 
 class SearchService:
-    """Orchestrator for indexing, filtering, and multi-ranker retrieval."""
+    """Orchestrator for indexing, filtering, snippet extraction, and multi-ranker retrieval."""
 
     def __init__(self, index: Optional[InvertedIndex] = None):
         self.index = index if index is not None else InvertedIndex()
         self.metadata: Dict[str, Dict[str, Any]] = {}
+        self.document_texts: Dict[str, str] = {}
+        self.passage_engine = PassageRetrievalEngine(max_snippet_length=250)
+
         self._boolean_engine: Optional[BooleanRetrievalEngine] = None
         self._tfidf_engine: Optional[TFIDFRetrievalEngine] = None
         self._bm25_engine: Optional[BM25RetrievalEngine] = None
+        self._language_model_engine: Optional[LanguageModelRetrievalEngine] = None
 
     @property
     def boolean_engine(self) -> BooleanRetrievalEngine:
@@ -71,15 +81,23 @@ class SearchService:
             self._bm25_engine = BM25RetrievalEngine(self.index)
         return self._bm25_engine
 
+    @property
+    def language_model_engine(self) -> LanguageModelRetrievalEngine:
+        if self._language_model_engine is None:
+            self._language_model_engine = LanguageModelRetrievalEngine(self.index)
+        return self._language_model_engine
+
     def _reset_engines(self) -> None:
         """Invalidate cached engines when index is modified."""
         self._boolean_engine = None
         self._tfidf_engine = None
         self._bm25_engine = None
+        self._language_model_engine = None
 
     def add_document(self, doc_id: str, text: str, metadata: Optional[Dict[str, Any]] = None) -> None:
         """Index a single document with optional metadata."""
         self.index.add_document(doc_id, text)
+        self.document_texts[doc_id] = text
         if metadata:
             self.metadata[doc_id] = metadata
         self._reset_engines()
@@ -91,6 +109,7 @@ class SearchService:
         """Batch index documents with metadata."""
         for doc_id, text, meta in documents:
             self.index.add_document(doc_id, text)
+            self.document_texts[doc_id] = text
             if meta:
                 self.metadata[doc_id] = meta
         self._reset_engines()
@@ -108,9 +127,10 @@ class SearchService:
             doc_id = item.get("doi") or item.get("external_id") or str(item.get("id"))
             title = item.get("title", "")
             abstract = item.get("abstract", "") or ""
-            text = f"{title} {abstract}".strip()
+            text = f"{title}. {abstract}".strip()
             meta = {
                 "title": title,
+                "abstract": abstract,
                 "publication_year": item.get("publication_year"),
                 "categories": item.get("categories", []),
                 "keywords": item.get("keywords", []),
@@ -161,8 +181,9 @@ class SearchService:
         year_max: Optional[int] = None,
         category: Optional[str] = None,
         candidate_ids: Optional[Set[str]] = None,
+        include_snippets: bool = True,
     ) -> SearchResponse:
-        """Execute search with specified ranker and metadata filters."""
+        """Execute search with specified ranker, metadata filters, and snippet extraction."""
         if not query or not query.strip():
             return SearchResponse(
                 query=query,
@@ -218,8 +239,13 @@ class SearchService:
             scored_docs = self.tfidf_engine.score(query=query, candidate_ids=active_candidates)
         elif method_norm == "bm25":
             scored_docs = self.bm25_engine.score(query=query, candidate_ids=active_candidates)
+        elif method_norm in ("language_model", "lm", "query_likelihood", "ql"):
+            scored_docs = self.language_model_engine.score(query=query, candidate_ids=active_candidates)
+            method_norm = "language_model"
         else:
-            raise ValueError(f"Unsupported ranking method: '{method}'. Choose from: 'bm25', 'tfidf', 'boolean'.")
+            raise ValueError(
+                f"Unsupported ranking method: '{method}'. Choose from: 'bm25', 'tfidf', 'language_model', 'boolean'."
+            )
 
         total_hits = len(scored_docs)
 
@@ -232,6 +258,18 @@ class SearchService:
 
         results: List[SearchResult] = []
         for doc in paged_docs:
+            snippet_text: Optional[str] = None
+            highlighted: Optional[str] = None
+
+            if include_snippets:
+                # Extract best passage from abstract or document text
+                meta = self.metadata.get(doc.doc_id, {})
+                text_to_search = meta.get("abstract") or self.document_texts.get(doc.doc_id, "")
+                if text_to_search:
+                    passage = self.passage_engine.extract_best_passage(text_to_search, query)
+                    snippet_text = passage.text
+                    highlighted = passage.highlighted_text
+
             results.append(
                 SearchResult(
                     doc_id=doc.doc_id,
@@ -240,6 +278,8 @@ class SearchService:
                     method=doc.method,
                     term_scores=doc.term_scores,
                     metadata=self.metadata.get(doc.doc_id, {}),
+                    snippet=snippet_text,
+                    highlighted_snippet=highlighted,
                 )
             )
 
@@ -257,16 +297,20 @@ class SearchService:
         os.makedirs(directory, exist_ok=True)
         index_path = os.path.join(directory, "inverted_index.json")
         metadata_path = os.path.join(directory, "index_metadata.json")
+        texts_path = os.path.join(directory, "document_texts.json")
 
         self.index.save(index_path)
         with open(metadata_path, "w", encoding="utf-8") as f:
             json.dump(self.metadata, f, ensure_ascii=False)
+        with open(texts_path, "w", encoding="utf-8") as f:
+            json.dump(self.document_texts, f, ensure_ascii=False)
 
     @classmethod
     def load(cls, directory: str) -> "SearchService":
         """Load service from saved index and metadata artifacts."""
         index_path = os.path.join(directory, "inverted_index.json")
         metadata_path = os.path.join(directory, "index_metadata.json")
+        texts_path = os.path.join(directory, "document_texts.json")
 
         index = InvertedIndex.load(index_path)
         service = cls(index=index)
@@ -274,5 +318,9 @@ class SearchService:
         if os.path.exists(metadata_path):
             with open(metadata_path, "r", encoding="utf-8") as f:
                 service.metadata = json.load(f)
+
+        if os.path.exists(texts_path):
+            with open(texts_path, "r", encoding="utf-8") as f:
+                service.document_texts = json.load(f)
 
         return service

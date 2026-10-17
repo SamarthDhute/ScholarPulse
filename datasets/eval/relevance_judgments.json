@@ -1,0 +1,45 @@
+[
+  {
+    "query_id": "q1",
+    "query": "probabilistic retrieval ranking bm25",
+    "judgments": {
+      "10.1561/1500000019": 2,
+      "10.1145/290941.291008": 1,
+      "10.1561/1500000002": 1
+    }
+  },
+  {
+    "query_id": "q2",
+    "query": "vector space model automatic indexing tf-idf",
+    "judgments": {
+      "10.1145/361219.361220": 2,
+      "10.48550/arxiv.1301.3781": 1,
+      "10.3115/v1/d14-1162": 1
+    }
+  },
+  {
+    "query_id": "q3",
+    "query": "language modeling smoothing query likelihood",
+    "judgments": {
+      "10.1145/290941.291008": 2,
+      "10.48550/arxiv.2005.14165": 1,
+      "10.48550/arxiv.1810.04805": 1
+    }
+  },
+  {
+    "query_id": "q4",
+    "query": "deep residual convolutional neural networks image recognition",
+    "judgments": {
+      "10.1109/cvpr.2016.90": 2,
+      "10.1145/3065386": 2
+    }
+  },
+  {
+    "query_id": "q5",
+    "query": "inverted index compression posting lists",
+    "judgments": {
+      "10.1145/1458082.1458114": 2,
+      "10.1145/361219.361220": 1
+    }
+  }
+]
