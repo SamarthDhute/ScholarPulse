@@ -16,7 +16,7 @@
 | **B2** | Ingestion Pipeline, Text Normalizer, Porter Stemmer, Deduplication | ✅ Completed | 36 / 36 | `e374bc5` |
 | **B3** | Retrieval Core (Inverted Index, Boolean, TF-IDF, Okapi BM25) | ✅ Completed | 58 / 58 | `a573b18` |
 | **B4** | Query-Likelihood Language Model, Passage Snippets, IR Evaluation | ✅ Completed | 77 / 77 | `a62421b` |
-| **B5** | Data Science Modules (Classification, Clustering, Apriori, Analytics, Recommendations) | ✅ Completed | 116 / 116 | Pending Confirmation |
+| **B5** | Data Science Modules (Classification, Clustering, Apriori, Analytics, Recommendations) | ✅ Completed | 116 / 116 | `c5c7176` |
 | **B6** | FastAPI Endpoints, Pydantic Schemas, Dependency Wiring | 🟡 **Next Up** | — | — |
 | **B7** | Hardening, Boundary Testing, Secret Leakage Auditing | ⏳ Pending | — | — |
 | **B8** | Backend Freeze & User Acceptance Gate | ⏳ Pending | — | — |
@@ -73,7 +73,7 @@
 - Bibliometric & Research Analytics (`backend/app/data_science/analytics.py`): Publication trends over time with growth %, category share distributions, keyword frequencies, author rankings, and co-authorship collaboration network graph.
 - Content-Based Recommendations (`backend/app/recommendations/content_based.py`): TF-IDF cosine similarity ranking, strict exclusion of seed paper (FR-019), and explainable shared keywords.
 - Data Science Service Coordinator (`backend/app/data_science/service.py`): High-level integration tying together all DS and recommendation workflows.
-- **Commit:** Pending user confirmation | **Tests:** 116 passed (39 new tests).
+- **Commit:** `c5c7176` | **Tests:** 116 passed (39 new tests).
 
 ---
 
