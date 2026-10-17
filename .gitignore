@@ -1,0 +1,39 @@
+# Virtual environments
+.venv/
+backend/.venv/
+env/
+venv/
+ENV/
+
+# Python caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Secrets and environment files (Strictly ignored)
+.env
+.env.*
+!.env.example
+
+# Generated artifacts and models (keep .gitkeep only)
+artifacts/indexes/*
+!artifacts/indexes/.gitkeep
+artifacts/models/*
+!artifacts/models/.gitkeep
+artifacts/evaluations/*
+!artifacts/evaluations/.gitkeep
+datasets/processed/*
+!datasets/processed/.gitkeep
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
