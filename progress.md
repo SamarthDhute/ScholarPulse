@@ -1,7 +1,7 @@
 # ScholarPulse — Implementation Progress & Delivery Tracker
 
 > **Delivery Priority:** Backend First (Phases B0 to B8)  
-> **Status:** Phase B4 Completed (77/77 Automated Tests Passing)  
+> **Status:** Phase B5 Completed (116/116 Automated Tests Passing)  
 > **Last Updated:** October 17, 2026
 
 ---
@@ -16,8 +16,8 @@
 | **B2** | Ingestion Pipeline, Text Normalizer, Porter Stemmer, Deduplication | ✅ Completed | 36 / 36 | `e374bc5` |
 | **B3** | Retrieval Core (Inverted Index, Boolean, TF-IDF, Okapi BM25) | ✅ Completed | 58 / 58 | `a573b18` |
 | **B4** | Query-Likelihood Language Model, Passage Snippets, IR Evaluation | ✅ Completed | 77 / 77 | `a62421b` |
-| **B5** | Data Science Modules (Classification, Clustering, Apriori, Analytics) | 🟡 **Next Up** | — | — |
-| **B6** | FastAPI Endpoints, Pydantic Schemas, Dependency Wiring | ⏳ Pending | — | — |
+| **B5** | Data Science Modules (Classification, Clustering, Apriori, Analytics, Recommendations) | ✅ Completed | 116 / 116 | Pending Confirmation |
+| **B6** | FastAPI Endpoints, Pydantic Schemas, Dependency Wiring | 🟡 **Next Up** | — | — |
 | **B7** | Hardening, Boundary Testing, Secret Leakage Auditing | ⏳ Pending | — | — |
 | **B8** | Backend Freeze & User Acceptance Gate | ⏳ Pending | — | — |
 | **F0–F5**| Frontend Development (React + TypeScript + Vite + Tailwind) | 🔒 Locked | — | — |
@@ -66,39 +66,48 @@
 - IR Evaluation Harness (`backend/app/evaluation/retrieval_eval.py`): Precision@K, Recall@K, Mean Average Precision (MAP), Mean Reciprocal Rank (MRR), DCG@K, NDCG@K, and multi-ranker benchmarking (`compare_rankers`).
 - **Commit:** `a62421b` | **Tests:** 77 passed.
 
+### ✅ Phase B5: Data Science & Recommendation Modules
+- Supervised Text Classification (`backend/app/data_science/classifier.py`): MultinomialNB, LogisticRegression (`lbfgs`), LinearSVC, strict featurization ordering (split before fit), full metrics (Accuracy, Precision, Recall, Macro/Weighted F1, Confusion Matrix), model comparison suite, and joblib artifact persistence.
+- Unsupervised Document Clustering (`backend/app/data_science/clustering.py`): K-Means and Hierarchical clustering, Silhouette score, Inertia, top centroid term labels, optimal cluster count ($k$) search, and representative paper discovery.
+- Association Rule Mining (`backend/app/data_science/association_rules.py`): Apriori algorithm via `mlxtend` over keyword transactions, Support, Confidence, Lift, Leverage, Conviction, and paginated keyword lookups.
+- Bibliometric & Research Analytics (`backend/app/data_science/analytics.py`): Publication trends over time with growth %, category share distributions, keyword frequencies, author rankings, and co-authorship collaboration network graph.
+- Content-Based Recommendations (`backend/app/recommendations/content_based.py`): TF-IDF cosine similarity ranking, strict exclusion of seed paper (FR-019), and explainable shared keywords.
+- Data Science Service Coordinator (`backend/app/data_science/service.py`): High-level integration tying together all DS and recommendation workflows.
+- **Commit:** Pending user confirmation | **Tests:** 116 passed (39 new tests).
+
 ---
 
-## 3. Immediate Next Steps: Phase B5 Scope
+## 3. Immediate Next Steps: Phase B6 Scope
 
-- [ ] **Text Classification (`backend/app/data_science/classifier.py`):**
-  - Trainable TF-IDF + Classifier pipeline to predict paper research category.
-  - Metrics: Precision, Recall, F1-Score (macro/weighted), Confusion Matrix.
-  - Joblib artifact persistence.
-- [ ] **Document Clustering (`backend/app/data_science/clustering.py`):**
-  - K-Means and Hierarchical Clustering.
-  - Top cluster terms extraction for explainable semantic topic labeling.
-  - Silhouette score and inertia computation.
-  - Representative papers identification.
-- [ ] **Association Rule Mining (`backend/app/data_science/association_rules.py`):**
-  - Keyword transaction dataset generation.
-  - Apriori algorithm via `mlxtend` generating frequent itemsets.
-  - Association rules with configurable Support, Confidence, and Lift thresholds.
-- [ ] **Bibliometric & Research Analytics (`backend/app/data_science/analytics.py`):**
-  - Publication volume by year.
-  - Category and keyword frequency distributions.
-  - Co-authorship collaboration network graph.
-- [ ] **Phase B5 Tests:**
-  - Classifier train/test evaluation.
-  - Clustering topic labels and silhouette scoring.
-  - Association rule mining metrics.
-  - Analytics aggregations against sample dataset.
+- [ ] **Search Endpoints (`backend/app/api/v1/endpoints/search.py`):**
+  - `GET /api/v1/search` with ranker selection (`bm25`, `tfidf`, `language_model`, `boolean`), filters (`year_min`, `year_max`, `category`), pagination (`page`, `page_size`), and highlighted passage snippets.
+- [ ] **Paper Endpoints (`backend/app/api/v1/endpoints/papers.py`):**
+  - `GET /api/v1/papers` (list with filters and pagination).
+  - `GET /api/v1/papers/{id}` (full metadata, authors, keywords, categories).
+  - `GET /api/v1/papers/{id}/related` (content-based recommendations).
+- [ ] **Data Science & Analysis Endpoints (`backend/app/api/v1/endpoints/analysis.py`):**
+  - `POST /api/v1/analysis/classify` (predict categories for text or paper_id).
+  - `GET /api/v1/analysis/clusters` (cluster summaries and optimal k).
+  - `GET /api/v1/analysis/clusters/{cluster_id}/papers` (cluster member papers).
+  - `GET /api/v1/analysis/association-rules` (frequent keyword itemsets and rules with pagination).
+- [ ] **Research Analytics Endpoints (`backend/app/api/v1/endpoints/analytics.py`):**
+  - `GET /api/v1/analytics/overview` (collection metrics).
+  - `GET /api/v1/analytics/trends` (publication trends by year).
+  - `GET /api/v1/analytics/categories` and `/keywords`.
+  - `GET /api/v1/analytics/collaboration-network` (co-authorship graph).
+- [ ] **Search & Evaluation Endpoints (`backend/app/api/v1/endpoints/evaluation.py`):**
+  - `GET /api/v1/evaluation/retrieval` (MAP, NDCG@K, MRR, benchmark comparison).
+- [ ] **Admin & Ingestion Endpoints (`backend/app/api/v1/endpoints/ingestion.py`):**
+  - `POST /api/v1/admin/ingest` and `GET /api/v1/admin/ingest/status`.
+- [ ] **FastAPI Router Aggregation (`backend/app/api/v1/api.py`):**
+  - Mount all endpoint routers to FastAPI app factory.
 
 ---
 
 ## 4. Test Suite Summary
 
-- **Total Automated Tests:** 77
-- **Passing:** 77 (100%)
+- **Total Automated Tests:** 116
+- **Passing:** 116 (100%)
 - **Failing:** 0
-- **Execution Time:** ~13.5 seconds
+- **Execution Time:** ~13.1 seconds
 - **Command:** `backend\.venv\Scripts\python.exe -m pytest backend/tests/ -v`

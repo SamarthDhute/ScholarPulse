@@ -150,7 +150,47 @@ Defined using SQLAlchemy 2.0 declarative mapping in `backend/app/models/`:
 
 ---
 
-## 5. Key Engineering Insights & Gotchas
+## 5. Implemented Data Science & Recommendation Modules
+
+### 5.1 Supervised Text Classification (`PaperClassifier`)
+- Supervised classification across research taxonomies (Information Retrieval, Machine Learning, NLP, Data Mining, Systems).
+- Supports Multinomial Naive Bayes, Logistic Regression (`lbfgs` solver), and Linear SVC.
+- Strict featurization ordering: split before fitting TF-IDF to guarantee zero feature leakage.
+- Metrics reported: Accuracy, Precision (macro), Recall (macro), Macro/Weighted F1-score, class-level metrics, and Confusion Matrix.
+- Model comparison suite (`compare_models`) evaluating models on identical splits.
+- Artifact serialization with `joblib` and metadata JSON.
+
+### 5.2 Document Clustering & Topic Modeling (`PaperClustering`)
+- Unsupervised semantic topic grouping via K-Means and Hierarchical/Agglomerative Clustering.
+- Cosine-metric TF-IDF feature space.
+- Evaluation metrics: Silhouette Score and Inertia.
+- Automated optimal cluster count ($k$) search across candidate values.
+- Explainable semantic topic labels generated from top centroid feature weights.
+- Representative paper discovery based on cosine proximity to cluster centroids.
+
+### 5.3 Association Rule Mining (`KeywordAssociationMiner`)
+- Apriori algorithm powered by `mlxtend` over keyword transaction sets.
+- Strict validation: $\text{min\_support} \in (0, 1]$, $\text{min\_confidence} \in (0, 1]$, $\text{min\_lift} \ge 0.0$.
+- Calculates Support, Confidence, Lift, Leverage, and Conviction.
+- Directional rule search by antecedent term.
+- Bounded pagination conforming to SRS 8.8.
+
+### 5.4 Bibliometric & Research Analytics (`ResearchAnalyticsService`)
+- Chronological publication volume and year-over-year growth percentage.
+- Category distribution and percentage market share.
+- Recurring keyword frequencies and distributions.
+- Author productivity ranking and co-authorship collaboration network graph (nodes, edges, weights, top collaborating pairs).
+- Bounded time-range filtering (`year_min`, `year_max`).
+
+### 5.5 Content-Based Related-Paper Recommendations (`ContentBasedRecommender`)
+- Pairwise cosine similarity matrix over unified paper representations (title + abstract + keywords).
+- Strict exclusion of the query seed paper itself per FR-019.
+- Explainable shared keywords between seed paper and recommended candidates.
+- Fast top-$N$ recommendation with minimum similarity threshold.
+
+---
+
+## 6. Key Engineering Insights & Gotchas
 
 1. **Windows SQLite File Locking in Tests:**
    When testing file-based SQLite databases (e.g. Alembic migrations), `engine.dispose()` must be called before calling `os.remove(db_path)` to avoid Windows OS Error 32 sharing violations.
@@ -162,10 +202,14 @@ Defined using SQLAlchemy 2.0 declarative mapping in `backend/app/models/`:
    Using the smoothed RSJ-IDF variant $\ln\left(\frac{N - df + 0.5}{df + 0.5} + 1.0\right)$ guarantees strictly positive IDF even when a term appears in more than half the collection documents.
 5. **Language Model Underflow:**
    Direct multiplication of unigram probabilities causes arithmetic underflow for long queries. Summing log probabilities ($\ln P(t|M_d)$) guarantees numerical stability.
+6. **Logistic Regression Multiclass Solver:**
+   In scikit-learn $\ge$ 1.5, `solver='lbfgs'` natively handles multinomial multiclass classification without deprecation warnings.
+7. **Safe Stratification for Small Corpora:**
+   Stratified train/test splitting requires the test partition size to be at least equal to the number of classes. Conditional stratification guards against `ValueError` when running evaluations on small custom test sets.
 
 ---
 
-## 6. Development & Testing Commands
+## 7. Development & Testing Commands
 
 All backend dependencies are managed in `backend/.venv` (Python 3.12.14).
 
@@ -173,7 +217,7 @@ All backend dependencies are managed in `backend/.venv` (Python 3.12.14).
 # Activate environment
 backend\.venv\Scripts\Activate.ps1
 
-# Run full test suite (77 tests)
+# Run full test suite (116 tests)
 backend\.venv\Scripts\python.exe -m pytest backend/tests/ -v
 
 # Run Alembic migrations
