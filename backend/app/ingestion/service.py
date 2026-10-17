@@ -213,3 +213,8 @@ class IngestionService:
             summary=summary,
         )
         return final_run or run
+
+    def ingest_from_json_file(self, filepath: str, source_name: Optional[str] = None) -> IngestionRun:
+        """Alias for ingest_from_file."""
+        return self.ingest_from_file(file_path=filepath, source_name=source_name)
+

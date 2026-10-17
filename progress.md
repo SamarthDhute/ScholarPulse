@@ -1,7 +1,7 @@
 # ScholarPulse — Implementation Progress & Delivery Tracker
 
 > **Delivery Priority:** Backend First (Phases B0 to B8)  
-> **Status:** Phase B5 Completed (116/116 Automated Tests Passing)  
+> **Status:** Backend Complete & Frozen (Phases B0 to B8 Completed — 152/152 Automated Tests Passing)  
 > **Last Updated:** October 17, 2026
 
 ---
@@ -17,10 +17,10 @@
 | **B3** | Retrieval Core (Inverted Index, Boolean, TF-IDF, Okapi BM25) | ✅ Completed | 58 / 58 | `a573b18` |
 | **B4** | Query-Likelihood Language Model, Passage Snippets, IR Evaluation | ✅ Completed | 77 / 77 | `a62421b` |
 | **B5** | Data Science Modules (Classification, Clustering, Apriori, Analytics, Recommendations) | ✅ Completed | 116 / 116 | `c5c7176` |
-| **B6** | FastAPI Endpoints, Pydantic Schemas, Dependency Wiring | 🟡 **Next Up** | — | — |
-| **B7** | Hardening, Boundary Testing, Secret Leakage Auditing | ⏳ Pending | — | — |
-| **B8** | Backend Freeze & User Acceptance Gate | ⏳ Pending | — | — |
-| **F0–F5**| Frontend Development (React + TypeScript + Vite + Tailwind) | 🔒 Locked | — | — |
+| **B6** | FastAPI Product Endpoints, Pydantic Schemas, Dependency Providers | ✅ Completed | 139 / 139 | Pending User Permission |
+| **B7** | Hardening, Boundary Testing, Secret Leakage Auditing, Idempotency | ✅ Completed | 152 / 152 | Pending User Permission |
+| **B8** | Backend Freeze & 10 Acceptance Gates Audited | ✅ Completed | 152 / 152 | Pending User Permission |
+| **F0–F5**| Frontend Development (React + TypeScript + Vite + Tailwind) | 🔒 Ready for Approval | — | — |
 
 ---
 
@@ -75,39 +75,38 @@
 - Data Science Service Coordinator (`backend/app/data_science/service.py`): High-level integration tying together all DS and recommendation workflows.
 - **Commit:** `c5c7176` | **Tests:** 116 passed (39 new tests).
 
+### ✅ Phase B6: Product API Surface
+- Pydantic v2 schemas across all domains in `backend/app/schemas/` (`search.py`, `paper.py`, `taxonomy.py`, `analysis.py`, `analytics.py`, `evaluation.py`, `admin.py`, `library.py`).
+- Dependency injection providers in `backend/app/api/deps.py`: automatic in-memory dataset/model hydration, database sessions, and repository factories.
+- 21 API Route Controllers under `/api/v1`:
+  - `GET /api/v1/search`: BM25, TF-IDF, Language Model, Boolean, year and category filtering, passage snippets.
+  - `GET /api/v1/papers`, `GET /api/v1/papers/{id}`, `GET /api/v1/papers/{id}/related`: listing, details, and content-based recommendations excluding seed paper.
+  - `GET /api/v1/categories`, `GET /api/v1/keywords`: taxonomy listing with paper counts and keyword prefix autocomplete.
+  - `POST /api/v1/analysis/classify`, `GET /api/v1/analysis/clusters`, `GET /api/v1/analysis/clusters/{cluster_id}/papers`, `GET /api/v1/analysis/association-rules`: DS inference and exploration.
+  - `GET /api/v1/analytics/overview`, `GET /api/v1/analytics/trends`, `GET /api/v1/analytics/categories`, `GET /api/v1/analytics/keywords`, `GET /api/v1/analytics/collaboration-network`: bibliometric analytics and network graph.
+  - `GET /api/v1/evaluation/retrieval`: multi-ranker benchmarking against ground-truth judgments.
+  - `POST /api/v1/admin/ingest`, `GET /api/v1/admin/ingest/status`: dataset import and run history.
+  - `GET /api/v1/library/papers`, `POST /api/v1/library/papers`, `DELETE /api/v1/library/papers/{paper_id}`: per-user research bookmarks.
+- **Tests:** 23 integration tests in `test_api_endpoints.py` (total: 139 passed).
+
+### ✅ Phase B7: Hardening & Auditing
+- Strict input validation and boundary testing: query length caps (500 chars), page bounds, year limits [1900, 2100], cluster bounds [2, 10], support intervals (0.0, 1.0].
+- Zero secret leakage verification: ensured health endpoints and error envelopes never expose secret keys, database credentials, or stack traces.
+- Edge case handling: verified clean responses on empty result sets, no-match filters, and whitespace input.
+- Ingestion idempotency: verified re-ingesting duplicate records creates 0 duplicates and properly tracks skipped/updated records.
+- **Tests:** 13 hardening tests in `test_hardening.py` (total: 152 passed).
+
+### ✅ Phase B8: Backend Freeze & Acceptance Gates
+- Audited all 10 acceptance gates from SRS v1.0 Section 13.1.
+- 152 automated tests passing with 100% green.
+- Backend is completely verified and frozen. Ready for user approval to begin frontend development.
+
 ---
 
-## 3. Immediate Next Steps: Phase B6 Scope
+## 3. Test Suite Summary
 
-- [ ] **Search Endpoints (`backend/app/api/v1/endpoints/search.py`):**
-  - `GET /api/v1/search` with ranker selection (`bm25`, `tfidf`, `language_model`, `boolean`), filters (`year_min`, `year_max`, `category`), pagination (`page`, `page_size`), and highlighted passage snippets.
-- [ ] **Paper Endpoints (`backend/app/api/v1/endpoints/papers.py`):**
-  - `GET /api/v1/papers` (list with filters and pagination).
-  - `GET /api/v1/papers/{id}` (full metadata, authors, keywords, categories).
-  - `GET /api/v1/papers/{id}/related` (content-based recommendations).
-- [ ] **Data Science & Analysis Endpoints (`backend/app/api/v1/endpoints/analysis.py`):**
-  - `POST /api/v1/analysis/classify` (predict categories for text or paper_id).
-  - `GET /api/v1/analysis/clusters` (cluster summaries and optimal k).
-  - `GET /api/v1/analysis/clusters/{cluster_id}/papers` (cluster member papers).
-  - `GET /api/v1/analysis/association-rules` (frequent keyword itemsets and rules with pagination).
-- [ ] **Research Analytics Endpoints (`backend/app/api/v1/endpoints/analytics.py`):**
-  - `GET /api/v1/analytics/overview` (collection metrics).
-  - `GET /api/v1/analytics/trends` (publication trends by year).
-  - `GET /api/v1/analytics/categories` and `/keywords`.
-  - `GET /api/v1/analytics/collaboration-network` (co-authorship graph).
-- [ ] **Search & Evaluation Endpoints (`backend/app/api/v1/endpoints/evaluation.py`):**
-  - `GET /api/v1/evaluation/retrieval` (MAP, NDCG@K, MRR, benchmark comparison).
-- [ ] **Admin & Ingestion Endpoints (`backend/app/api/v1/endpoints/ingestion.py`):**
-  - `POST /api/v1/admin/ingest` and `GET /api/v1/admin/ingest/status`.
-- [ ] **FastAPI Router Aggregation (`backend/app/api/v1/api.py`):**
-  - Mount all endpoint routers to FastAPI app factory.
-
----
-
-## 4. Test Suite Summary
-
-- **Total Automated Tests:** 116
-- **Passing:** 116 (100%)
+- **Total Automated Tests:** 152
+- **Passing:** 152 (100%)
 - **Failing:** 0
-- **Execution Time:** ~13.1 seconds
+- **Execution Time:** ~10.5 seconds
 - **Command:** `backend\.venv\Scripts\python.exe -m pytest backend/tests/ -v`

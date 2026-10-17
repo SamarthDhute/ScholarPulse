@@ -58,3 +58,7 @@ class IngestionRepository(BaseRepository[IngestionRun]):
         """List most recent ingestion runs."""
         stmt = select(IngestionRun).order_by(desc(IngestionRun.started_at)).limit(limit)
         return self.db.scalars(stmt).all()
+
+    def list(self, limit: int = 20) -> Sequence[IngestionRun]:
+        """List recent ingestion runs (alias for list_recent)."""
+        return self.list_recent(limit=limit)

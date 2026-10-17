@@ -20,10 +20,18 @@ class BaseRepository(Generic[ModelType]):
         """Retrieve entity by primary key."""
         return self.db.get(self.model, id)
 
+    def get(self, id: Any) -> Optional[ModelType]:
+        """Retrieve entity by primary key (alias for get_by_id)."""
+        return self.get_by_id(id)
+
     def list_all(self, skip: int = 0, limit: int = 100) -> Sequence[ModelType]:
         """List entities with pagination."""
         stmt = select(self.model).offset(skip).limit(limit)
         return self.db.scalars(stmt).all()
+
+    def list(self, skip: int = 0, limit: int = 100) -> Sequence[ModelType]:
+        """List entities with pagination (alias for list_all)."""
+        return self.list_all(skip=skip, limit=limit)
 
     def count(self) -> int:
         """Count total entities in table."""

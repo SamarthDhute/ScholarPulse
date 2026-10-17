@@ -2,7 +2,7 @@
 
 > **Project:** ScholarPulse — Intelligent Research Discovery and Knowledge Mining Platform  
 > **Repository:** `https://github.com/SamarthDhute/ScholarPulse.git`  
-> **Last Updated:** October 17, 2026 (Post-Phase B4 completion)
+> **Last Updated:** October 17, 2026 (Backend Complete & Frozen: Phases B0–B8, 152/152 Tests Passing)
 
 This document serves as the persistent memory and technical reference for developers and AI agents working on ScholarPulse. It captures architectural decisions, data models, algorithm specifications, environment setup, and operational gotchas.
 
@@ -206,6 +206,12 @@ Defined using SQLAlchemy 2.0 declarative mapping in `backend/app/models/`:
    In scikit-learn $\ge$ 1.5, `solver='lbfgs'` natively handles multinomial multiclass classification without deprecation warnings.
 7. **Safe Stratification for Small Corpora:**
    Stratified train/test splitting requires the test partition size to be at least equal to the number of classes. Conditional stratification guards against `ValueError` when running evaluations on small custom test sets.
+8. **FastAPI TestClient with SQLite In-Memory Concurrency:**
+   FastAPI `TestClient` executes synchronous endpoint handlers in worker threads from AnyIO's threadpool. In-memory SQLite connections reject cross-thread usage unless `StaticPool` and `connect_args={"check_same_thread": False}` are configured.
+9. **Pydantic Type Coercion in Nested Structures:**
+   `top_terms: List[Dict[str, float]]` forces Pydantic v2 to parse all map values as floats, which fails if a dict contains string terms (e.g. `{"term": "transformer", "weight": 0.42}`). Use explicit nested models or `List[Dict[str, Any]]`.
+10. **Canonical Metadata Preservation in Recommender:**
+    The content-based recommender indexing maps multiple keys (`id`, `doi`, `external_id`) to the same matrix row index. Preserving the canonical `paper_entry` across all aliases ensures metadata like authors and categories are accessible for downstream analytics.
 
 ---
 
@@ -217,13 +223,14 @@ All backend dependencies are managed in `backend/.venv` (Python 3.12.14).
 # Activate environment
 backend\.venv\Scripts\Activate.ps1
 
-# Run full test suite (116 tests)
+# Run full test suite (152 tests across all unit and integration suites)
 backend\.venv\Scripts\python.exe -m pytest backend/tests/ -v
 
 # Run Alembic migrations
 cd backend
 ..\backend\.venv\Scripts\python.exe -m alembic upgrade head
 
-# Start local FastAPI server
+# Start local FastAPI server with OpenAPI documentation at /docs
 ..\backend\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8000
 ```
+

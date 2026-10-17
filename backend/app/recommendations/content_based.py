@@ -95,14 +95,23 @@ class ContentBasedRecommender:
                 self.id_to_idx[ext_id] = idx
             if doi:
                 self.id_to_idx[doi] = idx
-            self.papers_data[pid] = {
+            paper_entry = {
                 "id": pid,
                 "title": title,
                 "abstract": abstract,
                 "category": cat,
+                "categories": p.get("categories", [cat] if cat else []),
+                "authors": p.get("authors", []),
                 "publication_year": year,
                 "keywords": kw_terms,
+                "doi": doi,
+                "external_id": ext_id,
             }
+            self.papers_data[pid] = paper_entry
+            if ext_id:
+                self.papers_data[ext_id] = paper_entry
+            if doi:
+                self.papers_data[doi] = paper_entry
 
         # Vectorize corpus
         self.vectorizer = TfidfVectorizer(
@@ -140,7 +149,8 @@ class ContentBasedRecommender:
             raise KeyError(f"Paper ID '{paper_id}' not found in recommendation corpus.")
 
         target_idx = self.id_to_idx[pid_str]
-        target_meta = self.papers_data[pid_str]
+        canonical_pid = self.paper_ids[target_idx]
+        target_meta = self.papers_data.get(canonical_pid, {})
         target_kws: Set[str] = set(target_meta.get("keywords", []))
 
         # Row of pairwise cosine similarities

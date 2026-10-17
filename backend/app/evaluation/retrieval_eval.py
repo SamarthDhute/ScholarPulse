@@ -127,8 +127,24 @@ class EvaluationSummary:
 class RetrievalEvaluator:
     """Evaluates search algorithms against ground-truth relevance judgments."""
 
-    def __init__(self, cutoffs: Optional[List[int]] = None):
+    def __init__(
+        self,
+        cutoffs: Optional[List[int]] = None,
+        judgments: Optional[List[Dict[str, Any]]] = None,
+        dataset_version: str = "relevance-v1",
+    ):
         self.cutoffs = cutoffs if cutoffs is not None else [5, 10]
+        self.judgments: List[Dict[str, Any]] = judgments or []
+        self.dataset_version: str = dataset_version
+
+    @classmethod
+    def from_json_file(
+        cls, filepath: str, cutoffs: Optional[List[int]] = None, dataset_version: str = "relevance-v1"
+    ) -> "RetrievalEvaluator":
+        """Factory constructor loading judgments from a JSON file."""
+        instance = cls(cutoffs=cutoffs, dataset_version=dataset_version)
+        instance.judgments = instance.load_judgments(filepath)
+        return instance
 
     def load_judgments(self, filepath: str) -> List[Dict[str, Any]]:
         """Load benchmark queries and relevance judgments from JSON file."""
@@ -136,6 +152,10 @@ class RetrievalEvaluator:
             raise FileNotFoundError(f"Relevance judgments file not found at {filepath}")
         with open(filepath, "r", encoding="utf-8") as f:
             return json.load(f)
+
+    def get_evaluated_queries(self) -> List[Dict[str, Any]]:
+        """Return loaded benchmark queries."""
+        return self.judgments
 
     def evaluate_ranker(
         self,

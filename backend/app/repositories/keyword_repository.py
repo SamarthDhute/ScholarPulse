@@ -32,10 +32,27 @@ class KeywordRepository(BaseRepository[Keyword]):
 
     def search_prefix(self, prefix: str, limit: int = 20) -> Sequence[Keyword]:
         """Prefix search for keywords (supports autocomplete / filters)."""
+        from sqlalchemy.orm import selectinload
         stmt = (
             select(Keyword)
+            .options(selectinload(Keyword.papers))
             .where(Keyword.normalized_term.startswith(prefix.lower()))
             .order_by(Keyword.normalized_term)
+            .limit(limit)
+        )
+        return self.db.scalars(stmt).all()
+
+    def find_by_prefix(self, prefix: str, limit: int = 20) -> Sequence[Keyword]:
+        """Prefix search alias for find_by_prefix."""
+        return self.search_prefix(prefix=prefix, limit=limit)
+
+    def list_all(self, skip: int = 0, limit: int = 100) -> Sequence[Keyword]:
+        """List keywords with papers association eagerly loaded."""
+        from sqlalchemy.orm import selectinload
+        stmt = (
+            select(Keyword)
+            .options(selectinload(Keyword.papers))
+            .offset(skip)
             .limit(limit)
         )
         return self.db.scalars(stmt).all()

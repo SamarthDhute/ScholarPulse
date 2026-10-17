@@ -29,3 +29,14 @@ class CategoryRepository(BaseRepository[Category]):
             description=description,
         )
         return self.create(category)
+
+    def list_all(self, skip: int = 0, limit: int = 100) -> Sequence[Category]:
+        """List categories with papers association eagerly loaded."""
+        from sqlalchemy.orm import selectinload
+        stmt = (
+            select(Category)
+            .options(selectinload(Category.papers))
+            .offset(skip)
+            .limit(limit)
+        )
+        return self.db.scalars(stmt).all()
