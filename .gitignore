@@ -31,9 +31,14 @@ artifacts/evaluations/*
 datasets/processed/*
 !datasets/processed/.gitkeep
 
+# Frontend build artifacts
+frontend/node_modules/
+frontend/dist/
+
 # IDE and OS files
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
 desktop.ini
+

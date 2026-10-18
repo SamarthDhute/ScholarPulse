@@ -17,10 +17,10 @@
 | **B3** | Retrieval Core (Inverted Index, Boolean, TF-IDF, Okapi BM25) | ✅ Completed | 58 / 58 | `a573b18` |
 | **B4** | Query-Likelihood Language Model, Passage Snippets, IR Evaluation | ✅ Completed | 77 / 77 | `a62421b` |
 | **B5** | Data Science Modules (Classification, Clustering, Apriori, Analytics, Recommendations) | ✅ Completed | 116 / 116 | `c5c7176` |
-| **B6** | FastAPI Product Endpoints, Pydantic Schemas, Dependency Providers | ✅ Completed | 139 / 139 | Pending User Permission |
-| **B7** | Hardening, Boundary Testing, Secret Leakage Auditing, Idempotency | ✅ Completed | 152 / 152 | Pending User Permission |
-| **B8** | Backend Freeze & 10 Acceptance Gates Audited | ✅ Completed | 152 / 152 | Pending User Permission |
-| **F0–F5**| Frontend Development (React + TypeScript + Vite + Tailwind) | 🔒 Ready for Approval | — | — |
+| **B6** | FastAPI Product Endpoints, Pydantic Schemas, Dependency Providers | ✅ Completed | 139 / 139 | `7036f6c` |
+| **B7** | Hardening, Boundary Testing, Secret Leakage Auditing, Idempotency | ✅ Completed | 152 / 152 | `7036f6c` |
+| **B8** | Backend Freeze & 10 Acceptance Gates Audited | ✅ Completed | 152 / 152 | `7036f6c` |
+| **Phase F**| Frontend Development (React 19 + TypeScript + Vite + Tailwind + Recharts) | ✅ Completed | 7 / 7 (Frontend) | Pending User Permission |
 
 ---
 
@@ -101,12 +101,36 @@
 - 152 automated tests passing with 100% green.
 - Backend is completely verified and frozen. Ready for user approval to begin frontend development.
 
+### ✅ Phase F: Frontend Web Application
+- Built modern React 19 + TypeScript + Vite + Tailwind CSS scholarly frontend.
+- Imported Brand Kit design tokens (`tokens.css`) — light editorial theme, 4px grid, Inter typography, `#F5F8FC` backdrop, `#14233B` navy text, `#246BFD` blue accents.
+- Implemented all 14 screens/routes:
+  - `/` — Discover & Home
+  - `/search` — 3-Column Search Results (Reference B aligned) with BM25/TF-IDF/LM/Boolean ranking switcher, faceted year/category filters, keyword autocomplete, and Results Insights sidebar.
+  - `/papers` — Papers Directory with author, category, keyword, and `year_from`/`year_to` filtering.
+  - `/papers/:id` — Canonical Paper Details with authors, abstract, DOI, and related recommendations.
+  - `/topics` — Topic Exploration with K-Means & Hierarchical clustering, Silhouette scores, and centroid papers.
+  - `/topics/clusters/:clusterId` — Cluster member paper listing.
+  - `/analytics` — Recharts AreaChart (Publication trends), PieChart (Category distribution), BarChart (Top keywords), and Co-authorship leaderboard.
+  - `/recommendations/:paperId` — Content-based recommendations with cosine similarity.
+  - `/library` — Saved paper bookmarks with backend persistence.
+  - `/evaluation` — Information Retrieval benchmarking with Cranfield MAP, MRR, Precision@K, NDCG@K.
+  - `/analysis` — Multiclass classification and Apriori association-rule mining.
+  - `/admin/ingestion` — Dataset ingestion trigger and history status.
+  - `/login` & `/register` — Open research mode transparency.
+- Safe HTML snippet sanitizer (`renderSafeSnippet`) preventing XSS while displaying `<mark>` keywords.
+- Zero fake/fabricated business data in production flows.
+- **Frontend Tests:** 7 unit tests passing (100%).
+- **Production Build:** Succeeded (`tsc -b && vite build` exited 0).
+
 ---
 
 ## 3. Test Suite Summary
 
-- **Total Automated Tests:** 152
-- **Passing:** 152 (100%)
-- **Failing:** 0
-- **Execution Time:** ~10.5 seconds
-- **Command:** `backend\.venv\Scripts\python.exe -m pytest backend/tests/ -v`
+- **Backend Automated Tests:** 152 / 152 passed (100%)
+- **Frontend Automated Tests:** 7 / 7 passed (100%)
+- **Total Workspace Tests:** 159 passed
+- **Commands:**
+  - Backend: `backend\.venv\Scripts\python.exe -m pytest backend/tests/ -v`
+  - Frontend: `npm run test` (Vitest) & `npm run build` (Vite)
+

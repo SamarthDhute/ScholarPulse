@@ -1,0 +1,36 @@
+@import "./styles/tokens.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    font-family: var(--font-family);
+    background-color: var(--bg-page);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100vh;
+  }
+
+  /* Safe Highlighted Snippet Mark Tag Styling */
+  mark {
+    background-color: var(--pale-blue);
+    color: var(--primary-blue);
+    font-weight: 600;
+    padding: 1px 3px;
+    border-radius: var(--radius-sm);
+  }
+
+  /* Focus visible accessibility */
+  :focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+  }
+}
